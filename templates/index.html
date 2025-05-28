@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }}</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #f6f8fd 0%, #f1f4f9 100%);
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .input-field {
+            transition: all 0.3s ease;
+            border: 2px solid #e2e8f0;
+        }
+        .input-field:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+        }
+        .toast {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            color: white;
+            z-index: 50;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .loading {
+            position: relative;
+        }
+        .loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin: -10px 0 0 -10px;
+            border: 2px solid #ffffff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <div class="text-center mb-8 animate__animated animate__fadeIn">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">Школьный SSO</h1>
+            <p class="text-lg text-gray-600">Единая система входа для школьных сервисов</p>
+        </div>
+
+        <div class="glass-effect rounded-2xl shadow-xl p-8 animate__animated animate__fadeInUp">
+            <div class="tabs flex mb-8 bg-gray-100 rounded-lg p-1">
+                <button class="tab-btn flex-1 py-3 px-4 text-center rounded-lg transition-all duration-300 font-medium" 
+                        onclick="switchTab('login')">Вход</button>
+                <button class="tab-btn flex-1 py-3 px-4 text-center rounded-lg transition-all duration-300 font-medium" 
+                        onclick="switchTab('register')">Регистрация</button>
+            </div>
+
+            <div id="login-form" class="animate__animated animate__fadeIn">
+                <form id="loginForm" hx-post="/api/login" 
+                      hx-swap="outerHTML"
+                      hx-headers='{"Content-Type": "application/json"}'
+                      hx-trigger="submit"
+                      hx-on::before-request="showLoading(this)"
+                      hx-on::after-request="handleResponse(event)">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2" for="username">
+                                Имя пользователя
+                            </label>
+                            <input class="input-field w-full px-4 py-3 rounded-lg focus:outline-none"
+                                   id="username" type="text" name="username" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2" for="password">
+                                Пароль
+                            </label>
+                            <input class="input-field w-full px-4 py-3 rounded-lg focus:outline-none"
+                                   id="password" type="password" name="password" required>
+                        </div>
+                        <button class="btn-primary w-full py-3 px-4 rounded-lg text-white font-medium"
+                                type="submit">
+                            Войти
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="register-form" class="hidden animate__animated animate__fadeIn">
+                <form id="registerForm" hx-post="/api/register" 
+                      hx-swap="outerHTML"
+                      hx-headers='{"Content-Type": "application/json"}'
+                      hx-trigger="submit"
+                      hx-on::before-request="showLoading(this)"
+                      hx-on::after-request="handleResponse(event)">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2" for="reg-username">
+                                Имя пользователя
+                            </label>
+                            <input class="input-field w-full px-4 py-3 rounded-lg focus:outline-none"
+                                   id="reg-username" type="text" name="username" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2" for="email">
+                                Email
+                            </label>
+                            <input class="input-field w-full px-4 py-3 rounded-lg focus:outline-none"
+                                   id="email" type="email" name="email" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2" for="reg-password">
+                                Пароль
+                            </label>
+                            <input class="input-field w-full px-4 py-3 rounded-lg focus:outline-none"
+                                   id="reg-password" type="password" name="password" required>
+                        </div>
+                        <button class="btn-secondary w-full py-3 px-4 rounded-lg text-white font-medium"
+                                type="submit">
+                            Зарегистрироваться
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Проверка авторизации при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            checkTokenAndRedirect();
+        });
+
+        // Обработчик форм
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const data = {};
+                formData.forEach((value, key) => {
+                    data[key] = value;
+                });
+                
+                const button = form.querySelector('button[type="submit"]');
+                button.classList.add('loading');
+                button.disabled = true;
+                
+                try {
+                    const response = await fetch(form.getAttribute('hx-post'), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.token) {
+                        localStorage.setItem('token', result.token);
+                        showToast(result.message, 'bg-green-500');
+                        
+                        // Создаем временную форму для редиректа с токеном
+                        const redirectForm = document.createElement('form');
+                        redirectForm.method = 'GET';
+                        redirectForm.action = '/dashboard';
+                        
+                        const tokenInput = document.createElement('input');
+                        tokenInput.type = 'hidden';
+                        tokenInput.name = 'token';
+                        tokenInput.value = result.token;
+                        
+                        redirectForm.appendChild(tokenInput);
+                        document.body.appendChild(redirectForm);
+                        redirectForm.submit();
+                    } else if (result.error) {
+                        showToast(result.error, 'bg-red-500');
+                    }
+                } catch (error) {
+                    showToast('Произошла ошибка при отправке данных', 'bg-red-500');
+                } finally {
+                    button.classList.remove('loading');
+                    button.disabled = false;
+                }
+            });
+        });
+
+        function showToast(message, bgColor) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${bgColor} animate__animated animate__fadeIn`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('animate__fadeIn');
+                toast.classList.add('animate__fadeOut');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        function switchTab(tab) {
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+            const loginBtn = document.querySelector('.tab-btn:first-child');
+            const registerBtn = document.querySelector('.tab-btn:last-child');
+
+            if (tab === 'login') {
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+                loginBtn.classList.add('bg-white', 'text-gray-800', 'shadow-sm');
+                loginBtn.classList.remove('text-gray-500');
+                registerBtn.classList.add('text-gray-500');
+                registerBtn.classList.remove('bg-white', 'text-gray-800', 'shadow-sm');
+            } else {
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+                registerBtn.classList.add('bg-white', 'text-gray-800', 'shadow-sm');
+                registerBtn.classList.remove('text-gray-500');
+                loginBtn.classList.add('text-gray-500');
+                loginBtn.classList.remove('bg-white', 'text-gray-800', 'shadow-sm');
+            }
+        }
+
+        // Инициализация первой вкладки
+        switchTab('login');
+
+        // Функция для проверки токена и редиректа
+        function checkTokenAndRedirect() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                fetch('/api/verify', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Токен недействителен');
+                })
+                .then(data => {
+                    if (data.user_id) {
+                        // Создаем временную форму для редиректа с токеном
+                        const redirectForm = document.createElement('form');
+                        redirectForm.method = 'GET';
+                        redirectForm.action = '/dashboard';
+                        
+                        const tokenInput = document.createElement('input');
+                        tokenInput.type = 'hidden';
+                        tokenInput.name = 'token';
+                        tokenInput.value = token;
+                        
+                        redirectForm.appendChild(tokenInput);
+                        document.body.appendChild(redirectForm);
+                        redirectForm.submit();
+                    } else {
+                        localStorage.removeItem('token');
+                    }
+                })
+                .catch(() => {
+                    localStorage.removeItem('token');
+                });
+            }
+        }
+    </script>
+</body>
+</html>
