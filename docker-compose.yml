@@ -9,4 +9,4 @@ services:
       - ./data:/app/data
     environment:
       - GIN_MODE=release
-    restart: unless-stopped 
+    restart: unless-stopped
