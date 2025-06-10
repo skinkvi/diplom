@@ -6,7 +6,9 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./data:/app/data
+      - type: bind
+        source: ./data
+        target: /app/data
     environment:
       - GIN_MODE=release
     restart: unless-stopped
